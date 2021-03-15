@@ -1,0 +1,32 @@
+name: Fetch latest data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * *'
+
+jobs:
+  download-data:
+    name: Download latest quota data
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+
+      - name: Install dependencies
+        uses: BSFishy/pip-action@v1
+        with:
+          requirements: requirements.txt
+
+      - name: Run Python script
+        run: python run.py output.xlsx
+
+      - name: Store output
+        uses: actions/upload-artifact@v2
+        with:
+          name: current-quota-balances.xlsx
+          path: ./output.xlsx

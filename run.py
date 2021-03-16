@@ -40,9 +40,10 @@ def get_quotas():
 if __name__ == "__main__":
     assert len(argv) == 2, "Usage: {0[0]} <output.xlsx>".format(argv)
 
-    with xlsxwriter.Workbook(argv[1]) as workbook:
+    with xlsxwriter.Workbook(argv[1], {"default_date_format": "yyyy-mm-dd"}) as workbook:
         worksheet = workbook.add_worksheet(name="Quota Utilisation")
         worksheet.write_row(0, 0, [f[0] for f in FIELDS])
+        worksheet.set_column(0, len(FIELDS)-1, width=13)
         for row, quota in enumerate(get_quotas(), start=1):
             stdout.write("{}\r".format(row))
             worksheet.write_row(row, 0, [f[1](quota['attributes']) for f in FIELDS])

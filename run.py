@@ -30,7 +30,7 @@ def get_quotas():
     pages = (total_pages // per_page) + min(total_pages % per_page, 1)
 
     yield from body['data']
-    for page_number in range(1, pages):
+    for page_number in range(2, pages):
         response = requests.get(URL_BASE, params={"page": page_number})
         assert response.status_code == 200
 

@@ -8,12 +8,13 @@ import xlsxwriter
 
 URL_BASE = "https://www.trade-tariff.service.gov.uk/api/v2/quotas/search"
 
-DATE_FORMAT = r'%Y-%m-%dT%H:%M:%S.%fZ'
+DATE_FORMAT = r'%Y-%m-%d'
+DATETIME_FORMAT = fr'{DATE_FORMAT}T%H:%M:%S.%fZ'
 
 
-def to_date(obj):
+def to_date(obj, format=DATETIME_FORMAT):
     if obj:
-        return datetime.strptime(obj, DATE_FORMAT).date()
+        return datetime.strptime(obj, format).date()
     else:
         return None
 
@@ -31,10 +32,10 @@ FIELDS = [
     ("Commodity codes", lambda q: ";\n".join(q["goods_nomenclature_item_ids"])),
     ("Status", lambda q: q["status"]),
     ("Last allocated", lambda q: to_date(q["last_allocation_date"])),
-    ("Suspension start", lambda q: to_date(q["suspension_period_start_date"])),
-    ("Suspension end", lambda q: to_date(q["suspension_period_end_date"])),
-    ("Blocking start", lambda q: to_date(q["blocking_period_start_date"])),
-    ("Blocking end", lambda q: to_date(q["blocking_period_end_date"])),
+    ("Suspension start", lambda q: to_date(q["suspension_period_start_date"], DATE_FORMAT)),
+    ("Suspension end", lambda q: to_date(q["suspension_period_end_date"], DATE_FORMAT)),
+    ("Blocking start", lambda q: to_date(q["blocking_period_start_date"], DATE_FORMAT)),
+    ("Blocking end", lambda q: to_date(q["blocking_period_end_date"], DATE_FORMAT)),
 ]
 
 

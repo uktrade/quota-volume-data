@@ -30,3 +30,16 @@ jobs:
         with:
           name: current-quota-balances.xlsx
           path: ./output.xlsx
+          
+      - name: Set release name
+        run: |
+          echo "release_name=$(date +'%F')" >> $GITHUB_ENV
+
+      - name: Create release
+        uses: ncipollo/release-action@v1.8.4
+        with:
+          artifact: ./output.xlsx 
+          name: ${{ env.release_name }}
+          commit: ${{ github.ref }}
+          tag: ${{ env.release_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}

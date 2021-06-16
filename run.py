@@ -19,24 +19,25 @@ def to_date(obj, format=DATETIME_FORMAT):
         return None
 
 
-FIELDS = [
+FIELDS = (
     ("Quota #", lambda q: q["quota_order_number_id"]),
-    ("Validity start", lambda q: to_date(q["validity_start_date"])),
-    ("Validity end", lambda q: to_date(q["validity_end_date"])),
-    ("Current balance", lambda q: float(q["balance"]) if q["balance"] else None),
-    ("Initial volume", lambda q: float(q["initial_volume"]) if q["initial_volume"] else None),
+    ("Geography", lambda q: ";\n".join(g["description"] for g in q["geographical_areas"])),
+    ("Description", lambda q: q["description"]),
+    ("Commodity codes", lambda q: ";\n".join(set(q["goods_nomenclature_item_ids"]))),
     ("Quota unit", lambda q: f'{q["measurement_unit"] or ""}{q["measurement_unit_qualifier"] or ""}'),
     ("Monetary unit", lambda q: q["monetary_unit"]),
-    ("Description", lambda q: q["description"]),
-    ("Geography", lambda q: ";\n".join(g["description"] for g in q["geographical_areas"])),
-    ("Commodity codes", lambda q: ";\n".join(q["goods_nomenclature_item_ids"])),
-    ("Status", lambda q: q["status"]),
-    ("Last allocated", lambda q: to_date(q["last_allocation_date"])),
+    ("Validity start", lambda q: to_date(q["validity_start_date"])),
+    ("Validity end", lambda q: to_date(q["validity_end_date"])),
     ("Suspension start", lambda q: to_date(q["suspension_period_start_date"], DATE_FORMAT)),
     ("Suspension end", lambda q: to_date(q["suspension_period_end_date"], DATE_FORMAT)),
     ("Blocking start", lambda q: to_date(q["blocking_period_start_date"], DATE_FORMAT)),
     ("Blocking end", lambda q: to_date(q["blocking_period_end_date"], DATE_FORMAT)),
-]
+    ("Status", lambda q: q["status"]),
+    ("Last allocated", lambda q: to_date(q["last_allocation_date"])),
+    ("Initial volume", lambda q: float(q["initial_volume"]) if q["initial_volume"] else None),
+    ("Current balance", lambda q: float(q["balance"]) if q["balance"] else None),
+)
+
 
 
 def get_includes(included):

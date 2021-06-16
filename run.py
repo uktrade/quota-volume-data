@@ -1,12 +1,15 @@
 from sys import argv
 from sys import stdout
+from functools import cache
 from datetime import datetime
 
 import requests
 import xlsxwriter
 
 
-URL_BASE = "https://www.trade-tariff.service.gov.uk/api/v2/quotas/search"
+URL_BASE = "https://www.trade-tariff.service.gov.uk/api/v2/"
+QUOTA_SEARCH = f"{URL_BASE}quotas/search"
+HEADING_SEARCH = f"{URL_BASE}headings/"
 
 DATE_FORMAT = r'%Y-%m-%d'
 DATETIME_FORMAT = fr'{DATE_FORMAT}T%H:%M:%S.%fZ'
@@ -23,6 +26,7 @@ FIELDS = (
     ("Quota #", lambda q: q["quota_order_number_id"]),
     ("Geography", lambda q: ";\n".join(g["description"] for g in q["geographical_areas"])),
     ("Description", lambda q: q["description"]),
+    ("Headings", lambda q: ";\n".join("{0[number]} – {0[description]}".format(h) for h in q["headings"])),
     ("Commodity codes", lambda q: ";\n".join(set(q["goods_nomenclature_item_ids"]))),
     ("Quota unit", lambda q: f'{q["measurement_unit"] or ""}{q["measurement_unit_qualifier"] or ""}'),
     ("Monetary unit", lambda q: q["monetary_unit"]),
@@ -78,11 +82,24 @@ def relationships(obj, name: str):
         yield (data["type"], data["id"])
 
 
+@cache
+def get_heading(heading: str):
+    response = requests.get(HEADING_SEARCH + heading)
+    assert response.status_code == 200 
+
+    body = response.json()
+    return {
+        "number": heading,
+        "description": body["data"]["attributes"]["description"],
+    }
+
+
 def augment(quotas, includes={}):
     for quota in quotas:
         quota["attributes"]["measures"] = []
         quota["attributes"]["geographical_areas"] = []
         quota["attributes"]["goods_nomenclature_item_ids"] = []
+        quota["attributes"]["headings"] = []
 
         for measure_id in relationships(quota, "measures"):
             measure = includes.get(measure_id)
@@ -90,6 +107,10 @@ def augment(quotas, includes={}):
             quota["attributes"]["goods_nomenclature_item_ids"].append(
                 measure["goods_nomenclature_item_id"]
             )
+
+        headings = set(i[0:4] for i in quota["attributes"]["goods_nomenclature_item_ids"])
+        for h in sorted(headings):
+            quota["attributes"]["headings"].append(get_heading(h))
 
         order_number_id = next(relationships(quota, "order_number"))
         order_number = includes.get(order_number_id, {})
@@ -106,7 +127,7 @@ def augment(quotas, includes={}):
 
 
 def get_quotas():
-    response = requests.get(URL_BASE, params={"page": 1})
+    response = requests.get(QUOTA_SEARCH, params={"page": 1})
     assert response.status_code == 200
 
     body = response.json()
@@ -118,7 +139,7 @@ def get_quotas():
 
     yield from augment(body["data"], get_includes(body["included"]))
     for page_number in range(2, pages):
-        response = requests.get(URL_BASE, params={"page": page_number})
+        response = requests.get(QUOTA_SEARCH, params={"page": page_number})
         assert response.status_code == 200
 
         body = response.json()

@@ -22,24 +22,24 @@ jobs:
         with:
           requirements: requirements.txt
 
+      - name: Get current date
+        run: |
+          echo "current_date=$(date +'%F')" >> $GITHUB_ENV
+
       - name: Run Python script
-        run: python run.py output.xlsx
+        run: python run.py quotas-${{ env.current_date }}.xlsx
 
       - name: Store output
         uses: actions/upload-artifact@v2
         with:
           name: current-quota-balances.xlsx
-          path: ./output.xlsx
-          
-      - name: Set release name
-        run: |
-          echo "release_name=$(date +'%F')" >> $GITHUB_ENV
+          path: ./quotas-${{ env.current_date }}.xlsx
 
       - name: Create release
         uses: ncipollo/release-action@v1.8.4
         with:
           artifact: ./output.xlsx 
-          name: ${{ env.release_name }}
+          name: ${{ env.current_date }}
           commit: ${{ github.ref }}
-          tag: ${{ env.release_name }}
+          tag: ${{ env.current_date }}
           token: ${{ secrets.GITHUB_TOKEN }}

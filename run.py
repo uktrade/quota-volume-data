@@ -39,6 +39,22 @@ FIELDS = (
 )
 
 
+FORMATS = {
+    "wrapped": {"text_wrap": True},
+    "date": {'num_format': 'yyyy-mm-dd'},
+}
+
+
+FIELD_FORMATS = {
+    "Validity start": "date",
+    "Validity end": "date",
+    "Last allocated": "date",
+    "Suspension start": "date",
+    "Suspension end": "date",
+    "Blocking start": "date",
+    "Blocking end": "date",
+}
+
 
 def get_includes(included):
     return {
@@ -106,8 +122,9 @@ if __name__ == "__main__":
     assert len(argv) == 2, "Usage: {0[0]} <output.xlsx>".format(argv)
 
     with xlsxwriter.Workbook(argv[1]) as workbook:
-        wrapped = workbook.add_format({'text_wrap': True})
-        date = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        formats = {}
+        for format in FORMATS:
+            formats[format] = workbook.add_format(FORMATS[format])
 
         worksheet = workbook.add_worksheet(name="Quota Utilisation")
         worksheet.write_row(0, 0, [f[0] for f in FIELDS])
@@ -116,7 +133,7 @@ if __name__ == "__main__":
                 first_col=column,
                 last_col=column,
                 width=13,
-                cell_format=(date if "start" in field[0] or "end" in field[0] else wrapped),
+                cell_format=formats[FIELD_FORMATS.get(field[0], "wrapped")]
             )
 
         for row, quota in enumerate(get_quotas(), start=1):

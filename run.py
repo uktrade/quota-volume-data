@@ -36,12 +36,14 @@ FIELDS = (
     ("Last allocated", lambda q: to_date(q["last_allocation_date"])),
     ("Initial volume", lambda q: float(q["initial_volume"]) if q["initial_volume"] else None),
     ("Current balance", lambda q: float(q["balance"]) if q["balance"] else None),
+    ("Fill rate", lambda q: float(q["fill_rate"]) if "fill_rate" in q else None),
 )
 
 
 FORMATS = {
     "wrapped": {"text_wrap": True},
     "date": {'num_format': 'yyyy-mm-dd'},
+    "percentage": {"num_format": "0.00%"},
 }
 
 
@@ -53,6 +55,7 @@ FIELD_FORMATS = {
     "Suspension end": "date",
     "Blocking start": "date",
     "Blocking end": "date",
+    "Fill rate": "percentage",
 }
 
 
@@ -94,6 +97,10 @@ def augment(quotas, includes={}):
             includes.get((g["type"], g["id"]))
             for g in order_number.get("geographical_areas", {}).get("data", [])
         ]
+
+        parts = (quota["attributes"]["balance"], quota["attributes"]["initial_volume"])
+        if all(parts) and float(parts[1]) != 0.0:
+            quota["attributes"]["fill_rate"] = 1.0 - float(parts[0]) / float(parts[1])
 
         yield quota
 
